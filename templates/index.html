@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>Looked — follow the image</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Looked home"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12"/><path d="M8 20s4-8 12-8 12 8 12 8-4 8-12 8S8 20 8 20Z"/><circle cx="20" cy="20" r="4"/></svg><span>looked<span class="brand-dot">.</span></span></a>
+    <div class="top-right"><span class="local-badge"><span></span> Running locally</span><a href="#how-it-works">How it works <span aria-hidden="true">↗</span></a></div>
+  </header>
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-heading"><span class="eyebrow">YOUR WORKSPACE</span><span class="mini-tag">LOCAL</span></div>
+      <button id="new-search" class="new-search" type="button"><span aria-hidden="true">＋</span> New image search</button>
+      <div class="history-heading"><h2>Search history</h2><button id="clear-history" class="text-button" type="button" disabled>Clear</button></div>
+      <p class="sidebar-note">Saved on this device. Reopen for free.</p>
+      <div id="history" class="history-list"><p class="history-empty">Your searches will appear here.</p></div>
+      <div class="quota-box">
+        <div class="quota-title"><span>Monthly local budget</span><span class="mini-tag">UTC</span></div>
+        <strong id="month-used">— <span>/ — searches</span></strong>
+        <progress id="quota-progress" value="0" max="200" aria-label="Monthly local search budget"></progress>
+        <div id="quota-detail" class="quota-detail">Loading usage…</div>
+        <p>Cached searches use zero API calls. Refresh uses a new search.</p>
+        <details><summary>About these counters</summary><p>Local safeguards, not your SerpApi account balance. Attempts, including errors and timeouts, stay counted. Clearing history keeps usage. Periods reset at UTC calendar boundaries.</p><p id="provider-requests"></p></details>
+      </div>
+      <div class="sidebar-footer"><span class="small-eye" aria-hidden="true">◉</span><span>No telemetry. No deployment.<br>Your workspace stays here.</span></div>
+    </aside>
+    <main>
+      <div class="page-heading"><span class="eyebrow">REVERSE IMAGE SEARCH</span><span class="provider-badge">Powered by Google Lens via SerpApi</span></div>
+      <h1>Every image has a trail.<br><span>See where it leads.</span></h1>
+      <p class="intro">Find pages connected to an image, with source links you can explore.</p>
+      <div id="key-notice" class="notice" hidden>Add your free SerpApi key to <code>.env</code>, then restart the app to search. Saved searches remain available.</div>
+      <form id="search-form" class="search-panel">
+        <div class="input-tabs" role="tablist" aria-label="Image source">
+          <button id="file-tab" type="button" role="tab" aria-selected="true" aria-controls="file-pane">Upload an image</button>
+          <button id="url-tab" type="button" role="tab" aria-selected="false" aria-controls="url-pane">Paste an image URL</button>
+        </div>
+        <div id="file-pane" role="tabpanel" aria-labelledby="file-tab">
+          <label id="dropzone" class="dropzone" for="image-file">
+            <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="21" rx="4"/><path d="m7 23 6-6 4 4 4-5 5 7M16 4v9m-4-5 4-4 4 4"/></svg></span>
+            <strong id="file-title">Drop an image here, or <span>browse files</span></strong>
+            <span id="file-help">JPEG, PNG or WebP · up to 500 KB · still images only</span>
+            <input id="image-file" name="image" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="file-help">
+          </label>
+        </div>
+        <div id="url-pane" role="tabpanel" aria-labelledby="url-tab" hidden>
+          <label for="image-url">Public image URL</label>
+          <input id="image-url" type="url" placeholder="https://example.com/photo.jpg" autocomplete="off" spellcheck="false">
+          <p class="field-help">Use a direct image link, up to 10 MB. Private addresses and login-only images are unsupported.</p>
+          <p class="field-help">A cached URL cannot detect a changed remote image. Refresh downloads it again.</p>
+        </div>
+        <div class="search-options">
+          <label>Results<select id="search-type"><option value="visual_matches">Visual matches</option><option value="exact_matches">Provider exact matches</option></select></label>
+          <label>Language<input id="language" value="en" maxlength="8" placeholder="en" spellcheck="false" required></label>
+          <label>Country <span class="optional">optional</span><input id="country" maxlength="2" placeholder="e.g. us" spellcheck="false"></label>
+        </div>
+        <div class="search-action"><p id="search-cost">A new file search sends the image to SerpApi.<br>1 local search · up to 2 provider calls · no automatic retries</p><button id="search-button" class="primary" type="submit">Search with Google Lens <span aria-hidden="true">↗</span></button></div>
+      </form>
+      <div id="message" class="message" role="alert" tabindex="-1" hidden></div>
+      <div id="loading" class="loading" role="status" hidden><span class="spinner"></span><div><strong>Following the image trail…</strong><p>This may take up to a few minutes. You can leave this window open.</p></div></div>
+      <section id="results-section" aria-labelledby="results-title" hidden>
+        <div class="saved-summary"><img id="source-preview" alt="Searched image preview"><div><span id="cache-label" class="cache-label"></span><h2 id="source-label"></h2><p id="search-meta"></p></div><button id="refresh" class="secondary" type="button">↻ Refresh · uses 1 search</button></div>
+        <div class="results-heading"><div><h2 id="results-title">Search results</h2><p id="results-count"></p></div><div class="export-actions"><span>Export all</span><a id="export-csv" class="small-button" download>CSV ↓</a><a id="export-json" class="small-button" download>JSON ↓</a></div></div>
+        <div class="results-tools"><label id="domain-label" hidden>Social domain <select id="domain-filter" aria-label="Filter returned results by social domain"></select></label><label class="thumbnail-toggle"><input id="show-thumbnails" type="checkbox" checked> Load available thumbnails</label><span>Provider order preserved</span></div>
+        <p id="result-warnings" class="field-help" hidden></p>
+        <div id="results-grid" class="results-grid"></div>
+        <div id="no-matches" class="empty-state" hidden><span aria-hidden="true">⌕</span><h3>No matching pages returned</h3><p>Google Lens returned no results for this search. Try a clearer image or another search tab. This does not mean the image is absent from the internet.</p></div>
+        <details class="search-details"><summary>Search details</summary><dl><dt>Image SHA-256</dt><dd id="image-hash"></dd><dt>Saved</dt><dd id="saved-at"></dd></dl><p>Exports include all saved results in provider order, regardless of the social-domain filter.</p></details>
+      </section>
+      <section id="welcome" class="welcome"><div class="trail-art" aria-hidden="true"><span>▧</span><i></i><span>⌕</span><i></i><span>↗</span></div><h2>A picture is your starting point.</h2><p>Add an image to discover the pages Google Lens returns.<br>Your results will appear here, ready to open or export.</p></section>
+      <section id="how-it-works" class="coverage-note"><span class="info-icon" aria-hidden="true">i</span><div><h2>A little context on coverage</h2><p>This searches Google Lens results through SerpApi. It does not search every social-media platform or the entire internet. Private, unindexed, or inaccessible content may never appear. Results are provider suggestions; no similarity scores are invented. “Provider exact matches” reflects the response’s exact-matches tab, not an independent verification.</p><p>New file searches upload your image to SerpApi; URL searches send its public address. Thumbnails are fetched from their hosts through Python when enabled. No tracking scripts or telemetry are included.</p></div></section>
+      <footer>Made for following the trail. <span>Local workspace · Google Lens via SerpApi</span></footer>
+    </main>
+  </div>
+</body>
+</html>

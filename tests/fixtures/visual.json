@@ -1,0 +1,11 @@
+{
+  "search_metadata": {"status": "Success"},
+  "visual_matches": [
+    {"position": 7, "title": "Mock first result", "source": "Example", "link": "https://example.com/page#first", "thumbnail": "https://images.example.com/thumb.png", "exact_matches": true},
+    {"position": 2, "title": "Mock duplicate", "link": "https://EXAMPLE.com:443/page?utm_source=test#second"},
+    {"position": 9, "title": "Mock social result", "link": "https://www.instagram.com/p/mock/"},
+    {"position": 11, "link": "https://example.org/other"},
+    {"title": "<script>alert('mock')</script>", "source": "Mock unsafe fields", "link": "javascript:alert(1)", "thumbnail": "data:image/svg+xml,not-real"},
+    "MALFORMED MOCK ENTRY"
+  ]
+}
